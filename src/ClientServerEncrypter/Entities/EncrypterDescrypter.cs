@@ -8,16 +8,15 @@ namespace ClientServerEncrypter.Entities
 {
     public class EncrypterDescrypter
     {
-        private static string _privateKey;
-        private static string _publicKey;
+        private static string privateKey;
+        private static string publicKey;
         private static UnicodeEncoding _encoder = new UnicodeEncoding();
-        
-        RNGCryptoServiceProvider rng;
+        private RNGCryptoServiceProvider rng;
 
         private TripleDES internalDes;
         private MD5 md5;
-        private string DKey;
-        private byte[] DIV;
+        private string internalDesKey;
+        private byte[] internalDesIV;
         private byte[] externalDIV;
         private string externalPublicKey;
 
@@ -27,25 +26,32 @@ namespace ClientServerEncrypter.Entities
              * Setup RSA
              */ 
             var rsa = new RSACryptoServiceProvider();
-            _privateKey = rsa.ToXmlString(true);
-            _publicKey = rsa.ToXmlString(false);
+            privateKey = rsa.ToXmlString(true);
+            publicKey = rsa.ToXmlString(false);
             /*
              * Setup Des
              */
             rng = new RNGCryptoServiceProvider();
             md5 = new MD5CryptoServiceProvider();
-            DKey = GenerateDKey();
-            DIV = GenerateDIV();
-            internalDes = CreateDes(DKey, DIV);
+            internalDesKey = GenerateDKey();
+            internalDesIV = GenerateDIV();
+            internalDes = CreateDes(internalDesKey, internalDesIV);
         }
-
-        public byte[] IV { get { return DIV; } }
-        public string PublicKey { get { return _publicKey; } }
+        /// <summary>
+        /// Gets the internal Des IV
+        /// </summary>
+        public byte[] IV { get { return internalDesIV; } }
+        /// <summary>
+        /// Gets the public key
+        /// </summary>
+        public string PublicKey { get { return publicKey; } }
+        public string ExternalPublicKey { get { return externalPublicKey; } }
+        #region Des
 
         private TripleDES CreateDes(string key, byte[] iv)
         {
             var tdes = new TripleDESCryptoServiceProvider();
-            tdes.Key = md5.ComputeHash(Encoding.Unicode.GetBytes(key));
+            tdes.Key = md5.ComputeHash(_encoder.GetBytes(key));
             tdes.IV = iv;
             return tdes;
         }
@@ -61,12 +67,6 @@ namespace ClientServerEncrypter.Entities
             var IV = new Byte[8];
             rng.GetBytes(IV);
             return IV;
-            //return System.Text.Encoding.UTF8.GetString(IV);
-        }
-
-        public bool CheckExternalKey()
-        {
-            return !string.IsNullOrWhiteSpace(this.externalPublicKey);
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace ClientServerEncrypter.Entities
         public byte[] EncryptPublicKey()
         {
             ICryptoTransform ct = internalDes.CreateEncryptor();
-            byte[] input = Encoding.Unicode.GetBytes(_publicKey);
+            byte[] input = _encoder.GetBytes(publicKey);
             return ct.TransformFinalBlock(input, 0, input.Length);
         }
 
@@ -89,12 +89,19 @@ namespace ClientServerEncrypter.Entities
         public void DecryptPublicKey(byte[] publicKey, byte[] externalIv)
         {
             externalDIV = externalIv;
-            var des = CreateDes(DKey, externalDIV);
+            var des = CreateDes(internalDesKey, externalDIV);
             byte[] b = publicKey;
             ICryptoTransform ct = des.CreateDecryptor();
             byte[] output = ct.TransformFinalBlock(b, 0, b.Length);
-            externalPublicKey = Encoding.Unicode.GetString(output);
+            externalPublicKey = _encoder.GetString(output);
         }
+        #endregion
+        public bool CheckExternalKey()
+        {
+            return !string.IsNullOrWhiteSpace(this.externalPublicKey);
+        }
+
+        #region RSA Methods
 
         /// <summary>
         /// Decript external message with my private key
@@ -105,10 +112,8 @@ namespace ClientServerEncrypter.Entities
         {
             var rsa = new RSACryptoServiceProvider();
             var dataArray = data.Split(new char[] { ',' });
-            byte[] dataByte = new byte[dataArray.Length];
-            for (int i = 0; i < dataArray.Length; i++)
-                dataByte[i] = Convert.ToByte(dataArray[i]);
-            rsa.FromXmlString(_privateKey);
+            byte[] dataByte = dataArray.Select(b => Convert.ToByte(b)).ToArray();
+            rsa.FromXmlString(privateKey);
             var decryptedByte = rsa.Decrypt(dataByte, false);
             return _encoder.GetString(decryptedByte);
         }
@@ -126,5 +131,6 @@ namespace ClientServerEncrypter.Entities
             var encryptedByteArray = rsa.Encrypt(dataToEncrypt, false).ToArray();
             return string.Join(",", encryptedByteArray);
         }
+        #endregion
     }
 }
