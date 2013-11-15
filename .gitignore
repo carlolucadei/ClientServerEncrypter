@@ -1,0 +1,13 @@
+out/
+obj/
+bin/
+test/
+*.csproj.user
+*.suo
+*.cache
+*.swp
+*.rptproj.user
+*.db
+*.sdf
+*.tmp
+*.datasource
