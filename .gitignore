@@ -2,6 +2,7 @@ out/
 obj/
 bin/
 test/
+ClientServerEncrypter/bin/
 *.csproj.user
 *.suo
 *.cache
