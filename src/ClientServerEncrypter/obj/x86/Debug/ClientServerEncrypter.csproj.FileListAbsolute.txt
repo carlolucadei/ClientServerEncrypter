@@ -1,0 +1,4 @@
+E:\Documenti\Progetti\ClientServerEncrypter\src\ClientServerEncrypter\bin\Debug\ClientServerEncrypter.exe
+E:\Documenti\Progetti\ClientServerEncrypter\src\ClientServerEncrypter\bin\Debug\ClientServerEncrypter.pdb
+E:\Documenti\Progetti\ClientServerEncrypter\src\ClientServerEncrypter\obj\x86\Debug\ClientServerEncrypter.exe
+E:\Documenti\Progetti\ClientServerEncrypter\src\ClientServerEncrypter\obj\x86\Debug\ClientServerEncrypter.pdb
