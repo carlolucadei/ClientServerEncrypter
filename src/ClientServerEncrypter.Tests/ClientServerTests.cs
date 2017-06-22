@@ -60,6 +60,22 @@ namespace ClientServerEncrypter.Tests
             Assert.AreEqual(serverMessage, decryptServerMessage);
         }
         [TestMethod]
+        public void Client_SentAlwaysTheSameMessage()
+        {
+            string clientMessage = "Hello world!";
+            /*
+             * Exchange encrypted public key
+             */
+            client.GetPublicKey(server.SendPublicKey(), server.IV);
+            server.GetPublicKey(client.SendPublicKey(), client.IV);
+            // The server received the message and decode it
+            var encryptedClientMessage1 = client.SendMessage(clientMessage);
+            var encryptedClientMessage2 = client.SendMessage(clientMessage);
+            Console.WriteLine(encryptedClientMessage1);
+            Console.WriteLine(encryptedClientMessage2);
+            //Assert.AreEqual(encryptedClientMessage1, encryptedClientMessage2);
+        }
+        [TestMethod]
         [ExpectedException(typeof(InvalidOperationException))]
         public void Client_DoNotSent_PublicKey()
         {
